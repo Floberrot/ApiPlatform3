@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 #[ORM\Entity(repositoryClass: DragonTreasureRepository::class)]
 #[ApiResource(
@@ -32,7 +33,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
     ],
     denormalizationContext: [
         'groups' => ['treasure:write']
-    ]
+    ],
+    paginationItemsPerPage: 10,
 )]
 class DragonTreasure
 {
@@ -43,7 +45,7 @@ class DragonTreasure
 
     #[ORM\Column(length: 255)]
     #[Groups(['treasure:read', 'treasure:write'])]
-    private ?string $name = null;
+    private ?string $name;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups('treasure:read')]
@@ -66,8 +68,9 @@ class DragonTreasure
     #[ORM\Column]
     private bool $isPublished = false;
 
-    function __construct()
+    function __construct(string $name = null)
     {
+        $this->name = $name;
         $this->plunderedAt = new \DateTimeImmutable();
     }
     public function getId(): ?int
@@ -80,28 +83,21 @@ class DragonTreasure
         return $this->name;
     }
 
-    public function setName(string $name): static
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
-
-    public function setDescription(string $name): static
+    public function setDescription(?string $description): static
     {
-        $this->name = $name;
+        $this->description = $description;
 
         return $this;
     }
 
     #[Groups(['treasure:write'])]
-    public function setTextDescription(string $description): static
+    #[SerializedName('description')]
+    public function setTextDescription(?string $description): static
     {
         $this->description = nl2br($description);
 
@@ -136,6 +132,14 @@ class DragonTreasure
     {
         return $this->plunderedAt;
     }
+
+    public function setPlunderedAt(\DateTimeImmutable $plunderedAt): static
+    {
+        $this->plunderedAt = $plunderedAt;
+
+        return $this;
+    }
+
     /**
      *  Human representation of when treasure was plundered
      */
